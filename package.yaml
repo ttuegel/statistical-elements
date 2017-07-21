@@ -1,8 +1,20 @@
 name: statistical-elements
 
 dependencies:
-  - base >= 4.7 && < 5
-  - hmatrix == 0.18.*
+  - base
+  - equational-reasoning
+  - ghc-typelits-knownnat
+  - ghc-typelits-presburger
+  - hmatrix
+  - vector
+
+default-extensions:
+  - DataKinds
+  - GADTs
+  - KindSignatures
+  - RankNTypes
+  - ScopedTypeVariables
+  - TypeOperators
 
 library:
   source-dirs: src/

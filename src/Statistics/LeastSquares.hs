@@ -1,30 +1,36 @@
+{-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
+{-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
+
 module Statistics.LeastSquares where
 
-import Numeric.LinearAlgebra
+import Linear
 
-newtype LeastSquares a = LeastSquares (Matrix a)
 
-fit :: (Field a) =>
-       Matrix a  -- ^ inputs: n samples of a p-vector
-    -> Matrix a  -- ^ outputs: n samples of a k-vector
-    -> LeastSquares a
+newtype LeastSquares p k a = LeastSquares (M (p + 1) k a)
+
+fit :: forall a (k :: Nat) (n :: Nat) (p :: Nat).
+       (KnownNat k, KnownNat n, KnownNat p, Num a) =>
+       M p n a  -- ^ inputs: n samples of a p-vector
+    -> M k n a  -- ^ outputs: n samples of a k-vector
+    -> LeastSquares p k a
 fit inp outp =
   let
-    -- lift inp into projective space:
-    -- augment the matrix with a column of 1s
-    x = konst 1 (rows inp, 1) ||| inp
+    -- a column of 1s to augment inp
+    col1 :: M 1 n a
+    col1 = konst (1 `asEltOfM` inp)
+    -- lift inp into projective space
+    x = col1 === inp
     -- least squares fit coefficients
-    beta = inv (tr x <> x) <> tr x <> outp
+    beta = inv (x ## tr x) ## x ## tr outp
   in
     LeastSquares beta
 
-predict :: (Field a) =>
-           LeastSquares a  -- ^ p-by-k fit coefficients
-        -> Vector a  -- ^ p-vector of inputs
-        -> Vector a  -- ^ k-vector of predicted outputs
+predict :: LeastSquares p k a  -- ^ p-by-k fit coefficients
+        -> V p a  -- ^ p-vector of inputs
+        -> V k a  -- ^ k-vector of predicted outputs
 predict (LeastSquares beta) inp =
   let
     -- lift inp into projective space
-    x = vjoin [konst 1 1, inp]
+    x = projective inp
   in
     tr beta #> x
