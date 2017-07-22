@@ -4,16 +4,17 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, base, equational-reasoning
+  f = { mkDerivation, algebra, base, equational-reasoning
       , ghc-typelits-knownnat, ghc-typelits-presburger, hmatrix, stdenv
+      , vector
       }:
       mkDerivation {
         pname = "statistical-elements";
         version = "0.0.0";
         src = ./.;
         libraryHaskellDepends = [
-          base equational-reasoning ghc-typelits-knownnat
-          ghc-typelits-presburger hmatrix
+          algebra base equational-reasoning ghc-typelits-knownnat
+          ghc-typelits-presburger hmatrix vector
         ];
         license = stdenv.lib.licenses.unfree;
       };

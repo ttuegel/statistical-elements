@@ -9,17 +9,14 @@ import Linear
 newtype LeastSquares p k a = LeastSquares (M (p + 1) k a)
 
 fit :: forall a (k :: Nat) (n :: Nat) (p :: Nat).
-       (KnownNat k, KnownNat n, KnownNat p, Num a) =>
+       (KnownNat k, KnownNat n, KnownNat p, Semiring a) =>
        M p n a  -- ^ inputs: n samples of a p-vector
     -> M k n a  -- ^ outputs: n samples of a k-vector
     -> LeastSquares p k a
 fit inp outp =
   let
-    -- a column of 1s to augment inp
-    col1 :: M 1 n a
-    col1 = konst (1 `asEltOfM` inp)
     -- lift inp into projective space
-    x = col1 === inp
+    x = projectiveM inp
     -- least squares fit coefficients
     beta = inv (x ## tr x) ## x ## tr outp
   in
@@ -31,6 +28,6 @@ predict :: LeastSquares p k a  -- ^ p-by-k fit coefficients
 predict (LeastSquares beta) inp =
   let
     -- lift inp into projective space
-    x = projective inp
+    x = projectiveV inp
   in
     tr beta #> x

@@ -1,6 +1,7 @@
 name: statistical-elements
 
 dependencies:
+  - algebra
   - base
   - equational-reasoning
   - ghc-typelits-knownnat
@@ -11,10 +12,18 @@ dependencies:
 default-extensions:
   - DataKinds
   - GADTs
+  - FlexibleContexts
+  - FlexibleInstances
   - KindSignatures
+  - MultiParamTypeClasses
+  - NoImplicitPrelude
   - RankNTypes
   - ScopedTypeVariables
   - TypeOperators
+  - ViewPatterns
+
+ghc-options:
+  - -Wall
 
 library:
   source-dirs: src/

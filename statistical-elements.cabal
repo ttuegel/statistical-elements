@@ -10,16 +10,23 @@ cabal-version:  >= 1.10
 library
   hs-source-dirs:
       src/
-  default-extensions: DataKinds GADTs KindSignatures RankNTypes ScopedTypeVariables TypeOperators
+  default-extensions: DataKinds GADTs FlexibleContexts FlexibleInstances KindSignatures MultiParamTypeClasses NoImplicitPrelude RankNTypes ScopedTypeVariables TypeOperators ViewPatterns
+  ghc-options: -Wall
   build-depends:
-      base
+      algebra
+    , base
     , equational-reasoning
     , ghc-typelits-knownnat
     , ghc-typelits-presburger
     , hmatrix
     , vector
   exposed-modules:
+      Algebra
       Linear
+      Linear.M
+      Linear.V
+      Linear.X
+      Statistics.Gaussian
       Statistics.LeastSquares
   other-modules:
       Paths_statistical_elements
