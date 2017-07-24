@@ -5,8 +5,8 @@ let
   inherit (nixpkgs) pkgs;
 
   f = { mkDerivation, algebra, base, equational-reasoning
-      , ghc-typelits-knownnat, ghc-typelits-presburger, hmatrix, stdenv
-      , vector
+      , ghc-typelits-knownnat, ghc-typelits-presburger, hmatrix, random
+      , stdenv, vector
       }:
       mkDerivation {
         pname = "statistical-elements";
@@ -14,7 +14,7 @@ let
         src = ./.;
         libraryHaskellDepends = [
           algebra base equational-reasoning ghc-typelits-knownnat
-          ghc-typelits-presburger hmatrix vector
+          ghc-typelits-presburger hmatrix random vector
         ];
         license = stdenv.lib.licenses.unfree;
       };

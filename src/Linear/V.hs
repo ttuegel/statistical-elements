@@ -1,5 +1,7 @@
 module Linear.V where
 
+import Data.Functor ((<$>))
+import Data.List (take)
 import Data.Proxy
 import qualified Data.Vector.Storable as V
 import GHC.TypeLits
@@ -27,6 +29,27 @@ dim _ =
     p = Proxy :: Proxy n
   in
     fromEnum (natVal p)
+
+fromList :: KnownNat n => [X a] -> V n a
+fromList xs =
+  let
+    as = unX <$> xs
+    self =
+      case xs of
+        Xd _ : _ -> Vd (L.fromList (take n as))
+        Xz _ : _ -> Vz (L.fromList (take n as))
+    n = dim self
+  in
+    self
+
+basis :: forall (n :: Nat). KnownNat n => [V n Double]
+basis =
+  let
+    p = Proxy :: Proxy n
+    n = fromEnum (natVal p)
+    e i = Vd (L.assoc n 0 [(i, one)])
+  in
+    e <$> take n [0..]
 
 instance Additive (V n a) where
   (+) (Vd a) (Vd b) = Vd (a P.+ b)

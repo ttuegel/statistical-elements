@@ -19,9 +19,11 @@ library
     , ghc-typelits-knownnat
     , ghc-typelits-presburger
     , hmatrix
+    , random
     , vector
   exposed-modules:
       Algebra
+      Lattice
       Linear
       Linear.M
       Linear.V
