@@ -1,5 +1,7 @@
 module Linear.X where
 
+import Prelude.Local
+
 import Algebra
 
 data X a where

@@ -1,8 +1,7 @@
 module Linear.V where
 
-import Data.Functor ((<$>))
-import Data.List (take)
-import Data.Proxy
+import Prelude.Local
+
 import qualified Data.Vector.Storable as V
 import GHC.TypeLits
 import qualified Prelude as P

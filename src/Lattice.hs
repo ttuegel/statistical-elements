@@ -1,10 +1,7 @@
 module Lattice where
 
-import Control.Applicative (Applicative(..))
-import Control.Monad (filterM)
-import Data.Ord (Ord(..))
-import Data.List (iterate, take)
-import System.IO (IO)
+import Prelude.Local
+
 import System.Random (randomRIO)
 
 import Algebra
@@ -20,10 +17,10 @@ lattice ((n, a) : as) = do
 
 fill :: (V n Double -> Double)  -- ^ distribution
      -> [V n Double]  -- ^ lattice
-     -> IO [V n Double]  -- ^ occupied points
+     -> IO [(V n Double, Bool)]  -- ^ occupied points
 fill dist points = do
   let
     check pt = do
       r <- randomRIO (0, 1)
       pure (r <= dist pt)
-  filterM check points
+  mapM (\p -> (,) p <$> check p) points

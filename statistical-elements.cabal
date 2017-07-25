@@ -28,6 +28,7 @@ library
       Linear.M
       Linear.V
       Linear.X
+      Prelude.Local
       Statistics.Gaussian
       Statistics.LeastSquares
   other-modules:

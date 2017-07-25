@@ -1,5 +1,7 @@
 module Statistics.Gaussian where
 
+import Prelude.Local
+
 import Linear
 
 -- | Multivariate normal distribution.

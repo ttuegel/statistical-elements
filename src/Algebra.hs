@@ -1,18 +1,16 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Algebra
-    ( module Control.Category
-    , module Data.Complex
+    ( module Data.Complex
     , module Numeric.Algebra
     , module Numeric.Ring.Class
-    , module Prelude
     ) where
 
-import Control.Category
+import Prelude.Local
+
 import Data.Complex (Complex(..))
 import Numeric.Algebra hiding (InvolutiveAlgebra(..))
 import Numeric.Ring.Class
-import Prelude (Double, Enum(..), Int, Integer, exp, pi, sqrt)
 import qualified Prelude as P
 
 instance Additive Double where
