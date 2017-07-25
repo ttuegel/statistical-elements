@@ -23,8 +23,7 @@ default-extensions:
   - TypeOperators
   - ViewPatterns
 
-ghc-options:
-  - -Wall
+ghc-options: -Wall
 
 library:
   source-dirs: src/
