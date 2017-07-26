@@ -2,6 +2,7 @@ module Linear.V where
 
 import Prelude.Local
 
+import Control.Monad.Random.Strict
 import qualified Data.Vector.Storable as V
 import GHC.TypeLits
 import qualified Prelude as P
@@ -49,6 +50,12 @@ basis =
     e i = Vd (L.assoc n 0 [(i, one)])
   in
     e <$> take n [0..]
+
+randomV :: (KnownNat n, Monad m, RandomGen g) =>
+           V n Double -> Double -> RandT g m (V n Double)
+randomV origin step = do
+  us <- getRandomRs (negate step, step)
+  pure (sum (zipWith (.*) us basis) + origin)
 
 instance Additive (V n a) where
   (+) (Vd a) (Vd b) = Vd (a P.+ b)

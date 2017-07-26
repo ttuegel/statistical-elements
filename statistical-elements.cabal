@@ -20,12 +20,12 @@ library
     , ghc-typelits-presburger
     , hmatrix
     , inline-r
+    , MonadRandom
     , open-browser
     , random
     , vector
   exposed-modules:
       Algebra
-      Lattice
       Linear
       Linear.M
       Linear.V
@@ -33,6 +33,7 @@ library
       Plot
       Plot.Labels
       Prelude.Local
+      Rejection
       Statistics.Gaussian
       Statistics.LeastSquares
   other-modules:

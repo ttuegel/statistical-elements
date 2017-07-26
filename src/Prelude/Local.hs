@@ -1,6 +1,7 @@
 module Prelude.Local
     ( module Control.Applicative
     , module Control.Category
+    , module Control.Exception
     , module Control.Monad
     , module Data.Bool
     , module Data.Foldable
@@ -12,22 +13,33 @@ module Prelude.Local
     , module Data.Proxy
     , module Data.Semigroup
     , module Data.String
+    , module Data.Typeable
     , module Prelude
     , module System.IO
+    , module Text.Show
+    , ProbException(..)
     ) where
 
 import Control.Applicative
 import Control.Category
+import Control.Exception
 import Control.Monad
 import Data.Bool
-import Data.Foldable
+import Data.Foldable hiding (sum)
 import Data.Functor
-import Data.List
+import Data.List hiding (sum)
 import Data.Maybe
 import Data.Monoid hiding ((<>))
 import Data.Ord
 import Data.Proxy
 import Data.Semigroup (Semigroup(..))
 import Data.String
+import Data.Typeable
 import Prelude (Double, Enum(..), Int, Integer, ($), exp, pi, sqrt)
 import System.IO
+import Text.Show
+
+data ProbException = ProbOverflow
+  deriving (Show, Typeable)
+
+instance Exception ProbException

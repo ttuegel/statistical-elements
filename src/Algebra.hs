@@ -9,7 +9,7 @@ module Algebra
 import Prelude.Local
 
 import Data.Complex (Complex(..))
-import Numeric.Algebra hiding (InvolutiveAlgebra(..))
+import Numeric.Algebra hiding (InvolutiveAlgebra(..), Order(..))
 import Numeric.Ring.Class
 import qualified Prelude as P
 

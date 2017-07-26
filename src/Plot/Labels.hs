@@ -2,6 +2,7 @@
 
 module Plot.Labels where
 
+import Data.Foldable
 import Prelude.Local
 
 import Language.R
