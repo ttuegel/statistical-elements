@@ -10,7 +10,7 @@ cabal-version:  >= 1.10
 library
   hs-source-dirs:
       src/
-  default-extensions: DataKinds GADTs FlexibleContexts FlexibleInstances KindSignatures MultiParamTypeClasses NoImplicitPrelude RankNTypes ScopedTypeVariables TypeOperators ViewPatterns
+  default-extensions: DataKinds GADTs FlexibleContexts FlexibleInstances KindSignatures MultiParamTypeClasses NoImplicitPrelude RankNTypes RecordWildCards ScopedTypeVariables TypeOperators ViewPatterns
   ghc-options: -Wall
   build-depends:
       algebra
@@ -19,6 +19,8 @@ library
     , ghc-typelits-knownnat
     , ghc-typelits-presburger
     , hmatrix
+    , inline-r
+    , open-browser
     , random
     , vector
   exposed-modules:
@@ -28,6 +30,8 @@ library
       Linear.M
       Linear.V
       Linear.X
+      Plot
+      Plot.Labels
       Prelude.Local
       Statistics.Gaussian
       Statistics.LeastSquares

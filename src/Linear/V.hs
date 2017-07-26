@@ -29,7 +29,7 @@ dim _ =
   in
     fromEnum (natVal p)
 
-fromList :: KnownNat n => [X a] -> V n a
+fromList :: (KnownNat n, 1 <= n) => [X a] -> V n a
 fromList xs =
   let
     as = unX <$> xs

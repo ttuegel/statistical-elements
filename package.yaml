@@ -7,6 +7,8 @@ dependencies:
   - ghc-typelits-knownnat
   - ghc-typelits-presburger
   - hmatrix
+  - inline-r
+  - open-browser
   - random
   - vector
 
@@ -19,6 +21,7 @@ default-extensions:
   - MultiParamTypeClasses
   - NoImplicitPrelude
   - RankNTypes
+  - RecordWildCards
   - ScopedTypeVariables
   - TypeOperators
   - ViewPatterns

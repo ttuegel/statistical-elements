@@ -21,6 +21,7 @@ data M (m :: Nat) (n :: Nat) a where
 
 instance Additive (M m n a) where
   (+) (Md a) (Md b) = Md (a P.+ b)
+  (+) (Mz a) (Mz b) = Mz (a P.+ b)
 
 instance Semiring a => LeftModule a (M m n a) where
   (.*) a (Md m) = Md (L.scale a m)
