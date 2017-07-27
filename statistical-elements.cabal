@@ -23,6 +23,7 @@ library
     , MonadRandom
     , open-browser
     , random
+    , statistics
     , vector
   exposed-modules:
       Algebra

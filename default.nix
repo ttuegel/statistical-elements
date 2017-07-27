@@ -1,6 +1,6 @@
 { mkDerivation, algebra, base, equational-reasoning
 , ghc-typelits-knownnat, ghc-typelits-presburger, hmatrix, inline-r
-, MonadRandom, open-browser, random, stdenv, vector
+, MonadRandom, open-browser, random, statistics, stdenv, vector
 }:
 mkDerivation {
   pname = "statistical-elements";
@@ -9,7 +9,7 @@ mkDerivation {
   libraryHaskellDepends = [
     algebra base equational-reasoning ghc-typelits-knownnat
     ghc-typelits-presburger hmatrix inline-r MonadRandom open-browser
-    random vector
+    random statistics vector
   ];
   license = stdenv.lib.licenses.unfree;
 }
