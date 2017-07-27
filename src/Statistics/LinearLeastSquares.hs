@@ -21,11 +21,11 @@ scoreZ :: Double  -- ^ variance estimator
        -> Double  -- ^ z-score
 scoreZ var beta v = beta / (var * sqrt v)
 
-residualSumOfSquares :: (KnownNat n, 1 <= n) =>
-                        M (p + 1) n Double -> V (p + 1) Double -> V n Double -> Double
-residualSumOfSquares inp beta outp =
+rss :: (KnownNat n, 1 <= n) =>
+       LeastSquares p -> M p n Double -> V n Double -> Double
+rss lls inp outp =
   let
-    outp' = (fromList . map Xd) $ (<.>) beta <$> toColumns inp
+    outp' = (fromList . map Xd) $ predict lls <$> toColumns inp
     res = outp - outp'
   in
     res <.> res
@@ -33,13 +33,13 @@ residualSumOfSquares inp beta outp =
 -- | Variance estimator based on 'residualSumOfSquares'.
 variance :: forall (n :: Nat) (p :: Nat).
             (KnownNat n, KnownNat p, 1 <= n) =>
-            M (p + 1) n Double -> V (p + 1) Double -> V n Double -> Double
-variance x coeffs outp =
+            LeastSquares p -> M p n Double -> V n Double -> Double
+variance lls inp outp =
   let
     n = (fromIntegral . fromEnum) (natVal (Proxy :: Proxy n))
     p = (fromIntegral . fromEnum) (natVal (Proxy :: Proxy p))
   in
-    residualSumOfSquares x coeffs outp / (n - p - 1)
+    rss lls inp outp / (n - p - 1)
 
 fit :: forall (n :: Nat) (p :: Nat).
        (KnownNat n, KnownNat p, 1 <= n) =>
@@ -58,11 +58,12 @@ fit inp outp =
     coeffs = inv_xxT #> (x #> outp)
     scoreZs =
       let
-        var = variance x coeffs outp
+        var = variance self inp outp
       in
         zipWithV (scoreZ var) coeffs (takeDiag inv_xxT)
+    self = LeastSquares {..}
   in
-    LeastSquares {..}
+    self
 
 predict :: LeastSquares p  -- ^ fit coefficients
         -> V p Double  -- ^ p-vector of inputs
@@ -73,3 +74,21 @@ predict (LeastSquares {..}) inp =
     x = projectiveV inp
   in
     coeffs <.> x
+
+scoreF :: forall (p1 :: Nat) (p2 :: Nat) (n :: Nat).
+          (KnownNat p1, KnownNat p2, KnownNat n, p2 <= p1, 1 <= n) =>
+          LeastSquares p1  -- ^ fit
+       -> M p1 n Double  -- ^ all inputs
+       -> LeastSquares p2  -- ^ fit
+       -> M p2 n Double  -- ^ selected inputs
+       -> V n Double  -- ^ outputs
+       -> Double
+scoreF lls1 inp1 lls2 inp2 outp =
+  let
+    n = (fromIntegral . fromEnum) (natVal (Proxy :: Proxy n))
+    p1 = (fromIntegral . fromEnum) (natVal (Proxy :: Proxy p1))
+    p2 = (fromIntegral . fromEnum) (natVal (Proxy :: Proxy p2))
+    rss1 = rss lls1 inp1 outp
+    rss2 = rss lls2 inp2 outp
+  in
+    (rss2 - rss1) * (n - p2 - 1) / (rss2 * (p2 - p1))
