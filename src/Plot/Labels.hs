@@ -3,7 +3,8 @@
 module Plot.Labels where
 
 import Data.Foldable
-import Prelude.Local
+import Data.Monoid hiding ((<>))
+import Data.Semigroup (Semigroup(..))
 
 import Language.R
 import Language.R.QQ

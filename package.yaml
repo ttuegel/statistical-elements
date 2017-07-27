@@ -21,7 +21,6 @@ default-extensions:
   - FlexibleInstances
   - KindSignatures
   - MultiParamTypeClasses
-  - NoImplicitPrelude
   - RankNTypes
   - RecordWildCards
   - ScopedTypeVariables

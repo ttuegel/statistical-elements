@@ -1,10 +1,8 @@
 module Rejection where
 
-import Prelude.Local
+import Exception
 
 import Control.Monad.Random.Strict
-
-import Algebra
 
 -- | Sample the desired distribution by rejection using the proposal
 -- distribution. Note that the acceptance probability must be chosen so that
@@ -19,7 +17,7 @@ sample propose proposed accept desired = sample_go
   where
     sample_go = do
       y <- propose
-      u <- getRandomR (zero, one)
+      u <- getRandomR (0, 1)
       let
         f = desired y
         g = proposed y

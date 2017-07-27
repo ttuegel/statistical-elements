@@ -5,8 +5,7 @@ module Plot
     , displayWidget
     ) where
 
-import Prelude.Local
-
+import Control.Monad (void)
 import Language.R
 import Language.R.QQ
 import Web.Browser (openBrowser)

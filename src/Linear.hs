@@ -1,15 +1,10 @@
 module Linear
-    ( module GHC.TypeLits
-    , module Algebra
-    , module Linear.X
-    , module Linear.M
-    , module Linear.V
+    ( module Numeric.LinearAlgebra
+    , V, M, H
     ) where
 
-import GHC.TypeLits
+import Numeric.LinearAlgebra
 
-import Algebra
-
-import Linear.X
-import Linear.M
-import Linear.V
+type V = Vector
+type M = Matrix
+type H = Herm
