@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
 
-module Statistics.LeastSquares where
+module Statistics.LinearLeastSquares where
 
 import Linear
 

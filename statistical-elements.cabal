@@ -36,7 +36,7 @@ library
       Prelude.Local
       Rejection
       Statistics.Gaussian
-      Statistics.LeastSquares
+      Statistics.LinearLeastSquares
   other-modules:
       Paths_statistical_elements
   default-language: Haskell2010
