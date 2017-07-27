@@ -94,3 +94,7 @@ instance Semiring a => LeftModule a (V n a) where
 instance Semiring a => RightModule a (V n a) where
   (*.) (Vd v) a = Vd (L.scale a v)
   (*.) (Vz v) a = Vz (L.scale a v)
+
+(<.>) :: V n a -> V n a -> a
+(<.>) (Vd a) (Vd b) = a L.<.> b
+(<.>) (Vz a) (Vz b) = a L.<.> b

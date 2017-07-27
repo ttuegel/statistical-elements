@@ -159,10 +159,6 @@ tr (Mz m) = Mz (L.tr m)
 (#>) (Md m) (Vd v) = Vd (m L.#> v)
 (#>) (Mz m) (Vz v) = Vz (m L.#> v)
 
-(<.>) :: V n a -> V n a -> a
-(<.>) (Vd a) (Vd b) = a L.<.> b
-(<.>) (Vz a) (Vz b) = a L.<.> b
-
 projectiveV :: V i a -> V (i + 1) a
 projectiveV (Vd a) = Vd (V.cons 1 a)
 projectiveV (Vz a) = Vz (V.cons 1 a)
