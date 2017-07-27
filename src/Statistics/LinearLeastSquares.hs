@@ -21,6 +21,7 @@ scoreZ :: Double  -- ^ variance estimator
        -> Double  -- ^ z-score
 scoreZ var beta v = beta / (var * sqrt v)
 
+-- | Residual sum-of-squares
 rss :: (KnownNat n, 1 <= n) =>
        LinearLeastSquares p -> M p n Double -> V n Double -> Double
 rss lls inp outp =
