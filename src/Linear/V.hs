@@ -98,3 +98,11 @@ instance Semiring a => RightModule a (V n a) where
 (<.>) :: V n a -> V n a -> a
 (<.>) (Vd a) (Vd b) = a L.<.> b
 (<.>) (Vz a) (Vz b) = a L.<.> b
+
+mapV :: (a -> a) -> V n a -> V n a
+mapV f (Vd v) = Vd (L.cmap f v)
+mapV f (Vz v) = Vz (L.cmap f v)
+
+zipWithV :: (a -> a -> a) -> V n a -> V n a -> V n a
+zipWithV f (Vd as) (Vd bs) = Vd (V.zipWith f as bs)
+zipWithV f (Vz as) (Vz bs) = Vz (V.zipWith f as bs)

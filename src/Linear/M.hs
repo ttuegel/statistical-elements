@@ -180,3 +180,10 @@ contract (Mz m) = Hz (L.mTm m)
 det :: M n n a -> a
 det (Md m) = L.det m
 det (Mz m) = L.det m
+
+takeDiag :: M n n a -> V n a
+takeDiag (Md m) = Vd (L.takeDiag m)
+takeDiag (Mz m) = Vz (L.takeDiag m)
+
+toColumns :: M m n a -> [V m a]
+toColumns (Md m) = Vd <$> L.toColumns m
