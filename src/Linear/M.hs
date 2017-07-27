@@ -187,3 +187,8 @@ takeDiag (Mz m) = Vz (L.takeDiag m)
 
 toColumns :: M m n a -> [V m a]
 toColumns (Md m) = Vd <$> L.toColumns m
+toColumns (Mz m) = Vz <$> L.toColumns m
+
+toRows :: M m n a -> [V n a]
+toRows (Md m) = Vd <$> L.toRows m
+toRows (Mz m) = Vz <$> L.toRows m
