@@ -3,7 +3,9 @@
 
 module Statistics.LinearLeastSquares where
 
+import qualified Statistics.Sample as Sample
 import qualified Data.Vector.Storable as V
+
 import Linear
 
 
@@ -12,6 +14,7 @@ data LLS =
   { coeffs :: V Double
   , scoreZs :: V Double
   }
+  deriving (Show)
 
 scoreZ :: Double  -- ^ variance estimator
        -> Double  -- ^ coefficient
@@ -81,3 +84,13 @@ scoreF lls1 inp1 lls2 inp2 outp =
     rss2 = rss lls2 inp2 outp
   in
     (rss2 - rss1) * (n - p2 - 1) / (rss2 * (p2 - p1))
+
+scaleInputs :: M Double -> M Double
+scaleInputs = fromColumns . map scaleColumn . toColumns
+  where
+    scaleColumn xs =
+      let
+        mean = Sample.mean xs
+        stdDev = Sample.stdDev xs
+      in
+        cmap (\x -> (x - mean) / stdDev) xs

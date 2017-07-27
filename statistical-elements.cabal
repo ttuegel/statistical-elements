@@ -10,10 +10,10 @@ cabal-version:  >= 1.10
 library
   hs-source-dirs:
       src/
-  default-extensions: DataKinds GADTs FlexibleContexts FlexibleInstances KindSignatures MultiParamTypeClasses RankNTypes RecordWildCards ScopedTypeVariables TypeOperators ViewPatterns
+  default-extensions: DataKinds DeriveFoldable DeriveFunctor DeriveTraversable FlexibleContexts FlexibleInstances GADTs KindSignatures MultiParamTypeClasses OverloadedStrings RankNTypes RecordWildCards ScopedTypeVariables TypeOperators ViewPatterns
   ghc-options: -Wall
   build-depends:
-      algebra
+      attoparsec
     , base
     , equational-reasoning
     , ghc-typelits-knownnat
@@ -24,8 +24,10 @@ library
     , open-browser
     , random
     , statistics
+    , text
     , vector
   exposed-modules:
+      Data.Prostate
       Exception
       Linear
       Plot
