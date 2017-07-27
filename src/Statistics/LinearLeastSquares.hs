@@ -9,8 +9,8 @@ import Algebra
 import Linear
 
 
-data LeastSquares p =
-  LeastSquares
+data LinearLeastSquares p =
+  LinearLeastSquares
   { coeffs :: V (p + 1) Double
   , scoreZs :: V (p + 1) Double
   }
@@ -22,7 +22,7 @@ scoreZ :: Double  -- ^ variance estimator
 scoreZ var beta v = beta / (var * sqrt v)
 
 rss :: (KnownNat n, 1 <= n) =>
-       LeastSquares p -> M p n Double -> V n Double -> Double
+       LinearLeastSquares p -> M p n Double -> V n Double -> Double
 rss lls inp outp =
   let
     outp' = (fromList . map Xd) $ predict lls <$> toColumns inp
@@ -33,7 +33,7 @@ rss lls inp outp =
 -- | Variance estimator based on 'residualSumOfSquares'.
 variance :: forall (n :: Nat) (p :: Nat).
             (KnownNat n, KnownNat p, 1 <= n) =>
-            LeastSquares p -> M p n Double -> V n Double -> Double
+            LinearLeastSquares p -> M p n Double -> V n Double -> Double
 variance lls inp outp =
   let
     n = (fromIntegral . fromEnum) (natVal (Proxy :: Proxy n))
@@ -45,7 +45,7 @@ fit :: forall (n :: Nat) (p :: Nat).
        (KnownNat n, KnownNat p, 1 <= n) =>
        M p n Double  -- ^ inputs: n samples of a p-vector
     -> V n Double  -- ^ outputs
-    -> LeastSquares p
+    -> LinearLeastSquares p
 fit inp outp =
   let
     -- lift inp into projective space
@@ -61,14 +61,14 @@ fit inp outp =
         var = variance self inp outp
       in
         zipWithV (scoreZ var) coeffs (takeDiag inv_xxT)
-    self = LeastSquares {..}
+    self = LinearLeastSquares {..}
   in
     self
 
-predict :: LeastSquares p  -- ^ fit coefficients
+predict :: LinearLeastSquares p  -- ^ fit coefficients
         -> V p Double  -- ^ p-vector of inputs
         -> Double  -- ^ predicted output
-predict (LeastSquares {..}) inp =
+predict (LinearLeastSquares {..}) inp =
   let
     -- lift inp into projective space
     x = projectiveV inp
@@ -77,9 +77,9 @@ predict (LeastSquares {..}) inp =
 
 scoreF :: forall (p1 :: Nat) (p2 :: Nat) (n :: Nat).
           (KnownNat p1, KnownNat p2, KnownNat n, p2 <= p1, 1 <= n) =>
-          LeastSquares p1  -- ^ fit
+          LinearLeastSquares p1  -- ^ fit
        -> M p1 n Double  -- ^ all inputs
-       -> LeastSquares p2  -- ^ fit
+       -> LinearLeastSquares p2  -- ^ fit
        -> M p2 n Double  -- ^ selected inputs
        -> V n Double  -- ^ outputs
        -> Double
