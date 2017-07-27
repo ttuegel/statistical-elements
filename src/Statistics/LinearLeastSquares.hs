@@ -23,10 +23,10 @@ scoreZ var beta v = beta / (var * sqrt v)
 
 -- | Residual sum-of-squares
 rss :: (KnownNat n, 1 <= n) =>
-       LinearLeastSquares p -> M p n Double -> V n Double -> Double
+       LinearLeastSquares p -> M n p Double -> V n Double -> Double
 rss lls inp outp =
   let
-    outp' = (fromList . map Xd) $ predict lls <$> toColumns inp
+    outp' = (fromList . map Xd) $ predict lls <$> toRows inp
     res = outp - outp'
   in
     res <.> res
@@ -34,7 +34,7 @@ rss lls inp outp =
 -- | Variance estimator based on 'residualSumOfSquares'.
 variance :: forall (n :: Nat) (p :: Nat).
             (KnownNat n, KnownNat p, 1 <= n) =>
-            LinearLeastSquares p -> M p n Double -> V n Double -> Double
+            LinearLeastSquares p -> M n p Double -> V n Double -> Double
 variance lls inp outp =
   let
     n = (fromIntegral . fromEnum) (natVal (Proxy :: Proxy n))
@@ -44,7 +44,7 @@ variance lls inp outp =
 
 fit :: forall (n :: Nat) (p :: Nat).
        (KnownNat n, KnownNat p, 1 <= n) =>
-       M p n Double  -- ^ inputs: n samples of a p-vector
+       M n p Double  -- ^ inputs: n samples of a p-vector
     -> V n Double  -- ^ outputs
     -> LinearLeastSquares p
 fit inp outp =
@@ -52,16 +52,16 @@ fit inp outp =
     -- lift inp into projective space
     x :: M (p + 1) n Double
     x = projectiveM inp
-    inv_xxT :: M (p + 1) (p + 1) Double
-    inv_xxT = inv (x ## tr x)
+    inv_xTx :: M (p + 1) (p + 1) Double
+    inv_xTx = inv (tr x ## x)
     -- least squares fit coefficients
     coeffs :: V (p + 1) Double
-    coeffs = inv_xxT #> (x #> outp)
+    coeffs = inv_xTx #> (tr x #> outp)
     scoreZs =
       let
         var = variance self inp outp
       in
-        zipWithV (scoreZ var) coeffs (takeDiag inv_xxT)
+        zipWithV (scoreZ var) coeffs (takeDiag inv_xTx)
     self = LinearLeastSquares {..}
   in
     self
@@ -79,9 +79,9 @@ predict (LinearLeastSquares {..}) inp =
 scoreF :: forall (p1 :: Nat) (p2 :: Nat) (n :: Nat).
           (KnownNat p1, KnownNat p2, KnownNat n, p2 <= p1, 1 <= n) =>
           LinearLeastSquares p1  -- ^ fit
-       -> M p1 n Double  -- ^ all inputs
+       -> M n p1 Double  -- ^ all inputs
        -> LinearLeastSquares p2  -- ^ fit
-       -> M p2 n Double  -- ^ selected inputs
+       -> M n p2 Double  -- ^ selected inputs
        -> V n Double  -- ^ outputs
        -> Double
 scoreF lls1 inp1 lls2 inp2 outp =
