@@ -40,7 +40,7 @@ variance lls inp outp =
     n = (fromIntegral . fromEnum) (natVal (Proxy :: Proxy n))
     p = (fromIntegral . fromEnum) (natVal (Proxy :: Proxy p))
   in
-    rss lls inp outp / (n - p - 1)
+    sqrt (rss lls inp outp / (n - p - 1))
 
 fit :: forall (n :: Nat) (p :: Nat).
        (KnownNat n, KnownNat p, 1 <= n) =>
