@@ -51,9 +51,10 @@ fit inp outp =
     (std, mean, stdDev) = standardize inp
     -- lift inp into projective space
     x = matrix 1 (replicate (rows std) 1) ||| std
-    inv_xTx = inv (tr x <> x)
+    (q, r) = thinQR x
     -- least squares fit coefficients
-    coeffs = inv_xTx #> (tr x #> outp)
+    coeffs = inv r #> (tr q #> outp)
+    inv_xTx = inv (tr r <> r)
     scoreZs =
       let
         var = variance self inp outp
