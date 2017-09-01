@@ -1,14 +1,11 @@
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
-
-module Statistics.LinearLeastSquares where
+module Statistics.Regression.Linear where
 
 import qualified Statistics.Sample as Sample
 import qualified Data.Vector.Storable as V
 
 import Linear
 
-
+-- | The result of a linear least-squares regression.
 data LLS =
   LLS
   { coeffs :: V Double
@@ -31,7 +28,7 @@ rss lls inp outp =
   in
     res <.> res
 
--- | Variance estimator based on 'residualSumOfSquares'.
+-- | Variance estimator based on 'rss'.
 variance :: LLS -> M Double -> V Double -> Double
 variance lls inp outp =
   let
@@ -85,12 +82,13 @@ scoreF lls1 inp1 lls2 inp2 outp =
   in
     (rss2 - rss1) * (n - p2 - 1) / (rss2 * (p2 - p1))
 
-scaleInputs :: M Double -> M Double
-scaleInputs = fromColumns . map scaleColumn . toColumns
+standardize :: M Double -> M Double
+standardize inp = (inp - mean) / stdDev
   where
-    scaleColumn xs =
-      let
-        mean = Sample.mean xs
-        stdDev = Sample.stdDev xs
-      in
-        cmap (\x -> (x - mean) / stdDev) xs
+    column i = flatten ((¿) inp [i])
+    mean =
+      let means = V.generate (cols inp) (\i -> Sample.mean (column i))
+      in repmat (asRow means) (rows inp) 1
+    stdDev =
+      let stdDevs = V.generate (cols inp) (\i -> Sample.stdDev (column i))
+      in repmat (asRow stdDevs) (rows inp) 1

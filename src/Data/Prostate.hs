@@ -4,13 +4,12 @@ module Data.Prostate where
 import Control.Applicative
 import Data.Attoparsec.Text (Parser)
 import Data.Either (partitionEithers)
-import Data.Text (Text)
 
 import qualified Data.Attoparsec.Text as Parse
 import qualified Data.Text.IO as Text
 
 import Linear
-import Statistics.LinearLeastSquares
+import Statistics.Regression.Linear
 
 
 data Train a = Train a | Test a
@@ -82,7 +81,7 @@ parseFile file = do
 linearRegression :: [Prostate] -> (LLS, M Double, V Double)
 linearRegression dat =
   let
-    inp = (scaleInputs . fromRows . map inputs) dat
+    inp = (standardize . fromRows . map inputs) dat
     outp = (fromList . map output) dat
   in
     (fit inp outp, inp, outp)
