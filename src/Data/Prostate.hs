@@ -78,11 +78,11 @@ parseFile file = do
     trainEither (Train x) = Left x
     trainEither (Test x) = Right x
 
-linearRegression :: [Prostate] -> (LLS, M Double, V Double)
+linearRegression :: [Prostate] -> LLS
 linearRegression dat =
   let
-    inp = (standardize . fromRows . map inputs) dat
+    inp = (fromRows . map inputs) dat
     outp = (fromList . map output) dat
   in
-    (fit inp outp, inp, outp)
+    fit inp outp
 

@@ -8,8 +8,14 @@ import Linear
 -- | The result of a linear least-squares regression.
 data LLS =
   LLS
-  { coeffs :: V Double
+  { mean :: V Double
+    -- ^ mean of training inputs (from standardization)
+  , stdDev :: V Double
+    -- ^ standard deviation of training inputs (from standardization)
+  , coeffs :: V Double
+    -- ^ fit coefficients
   , scoreZs :: V Double
+    -- ^ Z-score of fit coefficients
   }
   deriving (Show)
 
@@ -42,8 +48,9 @@ fit :: M Double  -- ^ inputs, n samples (rows) and p variables (columns)
     -> LLS
 fit inp outp =
   let
+    (std, mean, stdDev) = standardize inp
     -- lift inp into projective space
-    x = matrix 1 (replicate (rows inp) 1) ||| inp
+    x = matrix 1 (replicate (rows std) 1) ||| std
     inv_xTx = inv (tr x <> x)
     -- least squares fit coefficients
     coeffs = inv_xTx #> (tr x #> outp)
@@ -82,13 +89,10 @@ scoreF lls1 inp1 lls2 inp2 outp =
   in
     (rss2 - rss1) * (n - p2 - 1) / (rss2 * (p2 - p1))
 
-standardize :: M Double -> M Double
-standardize inp = (inp - mean) / stdDev
+standardize :: M Double -> (M Double, V Double, V Double)
+standardize inp =
+  ((inp - asRow mean) / asRow stdDev, mean, stdDev)
   where
     column i = flatten ((¿) inp [i])
-    mean =
-      let means = V.generate (cols inp) (\i -> Sample.mean (column i))
-      in repmat (asRow means) (rows inp) 1
-    stdDev =
-      let stdDevs = V.generate (cols inp) (\i -> Sample.stdDev (column i))
-      in repmat (asRow stdDevs) (rows inp) 1
+    mean = V.generate (cols inp) (\i -> Sample.mean (column i))
+    stdDev = V.generate (cols inp) (\i -> Sample.stdDev (column i))
