@@ -9,7 +9,10 @@ import qualified Data.Attoparsec.Text as Parse
 import qualified Data.Text.IO as Text
 
 import Linear
-import Statistics.Regression.Linear
+import Statistics.Regression.Linear (LLS)
+import qualified Statistics.Regression.Linear
+import Statistics.Regression.Ridge (RR)
+import qualified Statistics.Regression.Ridge
 
 
 data Train a = Train a | Test a
@@ -84,5 +87,12 @@ linearRegression dat =
     inp = (fromRows . map inputs) dat
     outp = (fromList . map output) dat
   in
-    fit inp outp
+    Statistics.Regression.Linear.fit inp outp
 
+ridgeRegression :: [Prostate] -> Double -> RR
+ridgeRegression dat lambda =
+  let
+    inp = (fromRows . map inputs) dat
+    outp = (fromList . map output) dat
+  in
+    Statistics.Regression.Ridge.fit inp outp lambda

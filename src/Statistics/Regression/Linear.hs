@@ -43,6 +43,7 @@ variance lls inp outp =
   in
     sqrt (rss lls inp outp / (n - p - 1))
 
+-- | Fit the provided training data to minimize the residual squared error ('rss').
 fit :: M Double  -- ^ inputs, n samples (rows) and p variables (columns)
     -> V Double  -- ^ outputs, n samples
     -> LLS
