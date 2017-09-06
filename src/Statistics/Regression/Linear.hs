@@ -43,24 +43,32 @@ variance lls inp outp =
   in
     sqrt (rss lls inp outp / (n - p - 1))
 
--- | Fit the provided training data to minimize the residual squared error ('rss').
+-- | The linear regression fit of the inputs \(\mathbf{X}\)
+-- to the outputs \(\mathbf{y}\).
+-- Linear regression minimizes the residual squared error,
+-- \[
+-- \mathsf{E}(\lambda)
+-- = {(\mathbf{y} - \mathbf{X} \beta)}^{T}
+--   {(\mathbf{y} - \mathbf{X} \beta)}
+-- \]
+-- given by 'rss'.
 fit :: M Double  -- ^ inputs, n samples (rows) and p variables (columns)
     -> V Double  -- ^ outputs, n samples
     -> LLS
 fit inp outp =
   let
-    (std, mean, stdDev) = standardize inp
-    -- lift inp into projective space
-    x = matrix 1 (replicate (rows std) 1) ||| std
-    (q, r) = thinQR x
+    (stdInp, mean, stdDev) = standardize inp
+    -- standardized input values lifted into projective space
+    projInp = matrix 1 (replicate (rows stdInp) 1) ||| stdInp
+    (colSpace, rightTri) = thinQR projInp
     -- least squares fit coefficients
-    coeffs = inv r #> (tr q #> outp)
-    inv_xTx = inv (tr r <> r)
+    coeffs = inv rightTri #> (tr colSpace #> outp)
     scoreZs =
       let
         var = variance self inp outp
+        covarDenorm = tr rightTri <> rightTri
       in
-        V.zipWith (scoreZ var) coeffs (takeDiag inv_xTx)
+        V.zipWith (scoreZ var) coeffs (takeDiag (inv covarDenorm))
     self = LLS {..}
   in
     self
@@ -69,11 +77,7 @@ predict :: LLS  -- ^ fit coefficients
         -> V Double  -- ^ p-vector of inputs
         -> Double  -- ^ predicted output
 predict (LLS {..}) inp =
-  let
-    -- lift inp into projective space
-    x = V.cons 1 inp
-  in
-    coeffs <.> x
+  V.head coeffs + V.tail coeffs <.> standardizeWith (mean, stdDev) inp
 
 scoreF :: LLS  -- ^ fit with all variables
        -> M Double  -- ^ all inputs
@@ -98,3 +102,6 @@ standardize inp =
     column i = flatten ((¿) inp [i])
     mean = V.generate (cols inp) (\i -> Sample.mean (column i))
     stdDev = V.generate (cols inp) (\i -> Sample.stdDev (column i))
+
+standardizeWith :: (V Double, V Double) -> V Double -> V Double
+standardizeWith (mean, stdDev) inp = (inp - mean) / stdDev
