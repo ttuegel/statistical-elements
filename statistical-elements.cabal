@@ -27,6 +27,7 @@ library
       Data.Prostate
       Exception
       Linear
+      Permutation
       Plot
       Plot.Labels
       Rejection
