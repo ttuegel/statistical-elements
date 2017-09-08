@@ -19,6 +19,7 @@ library
     , inline-r
     , MonadRandom
     , open-browser
+    , permutation
     , random
     , statistics
     , text

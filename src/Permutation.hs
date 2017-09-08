@@ -1,24 +1,20 @@
 module Permutation where
 
 import Control.Monad.Random
-import Data.Vector.Storable (Storable)
-import qualified Data.Vector.Storable as V
-import qualified Data.Vector.Storable.Mutable as V
+import Data.Permute (Permute)
+import qualified Data.Permute.MPermute as Permute
 
-import Linear
-
--- | Generate a random permutation of @n@ elements.
-permutation :: (Num i, Storable i) => Int  -- ^ @n@
-            -> IO (V i)
-permutation len = do
-  p <- V.unsafeThaw (V.enumFromN 0 len)
+-- | Generate a random permutation of @n@ elements by Knuth shuffles.
+shuffle :: Int -> IO Permute
+shuffle n = do
+  p <- Permute.newPermute n
   let
-    end = len - 1
-    permutation1 i
-      | i < len = do
+    end = n - 1
+    shuffle1 i
+      | i < end = do
           j <- getRandomR (i, end)
-          V.swap p i j
-          permutation1 (i + 1)
+          Permute.swapElems p i j
+          shuffle1 (i + 1)
       | otherwise = pure ()
-  permutation1 0
-  V.unsafeFreeze p
+  shuffle1 0
+  Permute.unsafeFreeze p
