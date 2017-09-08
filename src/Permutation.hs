@@ -1,7 +1,10 @@
-module Permutation where
+module Permutation
+  ( shuffle
+  , module Data.Permute
+  ) where
 
 import Control.Monad.Random
-import Data.Permute (Permute)
+import Data.Permute
 import qualified Data.Permute.MPermute as Permute
 
 -- | Generate a random permutation of @n@ elements by Knuth shuffles.

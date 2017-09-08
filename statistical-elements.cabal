@@ -21,6 +21,7 @@ library
     , open-browser
     , permutation
     , random
+    , refined
     , statistics
     , text
     , vector
@@ -35,6 +36,7 @@ library
       Statistics.Gaussian
       Statistics.Regression.Linear
       Statistics.Regression.Ridge
+      Statistics.Validation.Cross
   other-modules:
       Paths_statistical_elements
   default-language: Haskell2010

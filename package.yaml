@@ -9,6 +9,7 @@ dependencies:
   - open-browser
   - permutation
   - random
+  - refined
   - statistics
   - text
   - vector

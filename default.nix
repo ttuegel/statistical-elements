@@ -1,6 +1,6 @@
 { mkDerivation, attoparsec, base, hmatrix, inline-r, MonadRandom
-, open-browser, permutation, random, statistics, stdenv, text
-, vector
+, open-browser, permutation, random, refined, statistics, stdenv
+, text, vector
 }:
 mkDerivation {
   pname = "statistical-elements";
@@ -8,7 +8,7 @@ mkDerivation {
   src = ./.;
   libraryHaskellDepends = [
     attoparsec base hmatrix inline-r MonadRandom open-browser
-    permutation random statistics text vector
+    permutation random refined statistics text vector
   ];
   license = stdenv.lib.licenses.unfree;
 }
