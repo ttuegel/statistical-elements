@@ -16,7 +16,6 @@ validation :: M Double  -- ^ samples
 validation samples perm (unrefine -> n) =
   Vector.generate n sets
   where
-    (q, r) = quotRem (rows samples) n
     sets i =
       let
         (before, rest) = Vector.splitAt i blocks
@@ -25,17 +24,19 @@ validation samples perm (unrefine -> n) =
         train = Vector.foldl1' (===) (before Vector.++ after)
       in
         (train, test)
-    columnMap = asRow (V.enumFromN 0 (cols samples))
     blocks = Vector.generate n block
-    block i =
-      let
-        len
-          | i < r = q + 1
-          | otherwise = q
-        start
-          | i < r = (q + 1) * i
-          | otherwise = r + q * i
-        rowMap = asColumn (V.generate len (lookupRow start))
-      in
-        remap rowMap columnMap samples
-    lookupRow start i = fromIntegral (unsafeAt perm (start + i))
+      where
+        (q, r) = quotRem (rows samples) n
+        block i =
+          let
+            len
+              | i < r = q + 1
+              | otherwise = q
+            start
+              | i < r = (q + 1) * i
+              | otherwise = r + q * i
+            rowMap = asColumn (V.generate len (lookupRow start))
+          in
+            remap rowMap columnMap samples
+        columnMap = asRow (V.enumFromN 0 (cols samples))
+        lookupRow start i = fromIntegral (unsafeAt perm (start + i))
