@@ -70,29 +70,29 @@ parseRow = do
 parse :: Parser [Train Prostate]
 parse = parseHeader *> Parse.many1 parseRow
 
-parseFile :: FilePath -> IO ([Prostate], [Prostate])
+toSet :: [Prostate] -> M Double
+toSet samples =
+  let
+    inp = (fromRows . map inputs) samples
+    outp = (fromList . map output) samples
+  in
+    asColumn outp ||| inp
+
+parseFile :: FilePath -> IO (M Double, M Double)
 parseFile file = do
   r <- Parse.parseOnly parse <$> Text.readFile file
   case r of
     Left err -> error err
-    Right dat -> pure (partition dat)
+    Right samples -> do
+      let (train, test) = partition samples
+      pure (toSet train, toSet test)
   where
     partition = partitionEithers . map trainEither
     trainEither (Train x) = Left x
     trainEither (Test x) = Right x
 
-linearRegression :: [Prostate] -> LLS
-linearRegression dat =
-  let
-    inp = (fromRows . map inputs) dat
-    outp = (fromList . map output) dat
-  in
-    Statistics.Regression.Linear.fit inp outp
+linearRegression :: M Double -> LLS
+linearRegression = Statistics.Regression.Linear.fit
 
-ridgeRegression :: [Prostate] -> Double -> RR
-ridgeRegression dat lambda =
-  let
-    inp = (fromRows . map inputs) dat
-    outp = (fromList . map output) dat
-  in
-    Statistics.Regression.Ridge.fit inp outp lambda
+ridgeRegression :: M Double -> Double -> RR
+ridgeRegression = Statistics.Regression.Ridge.fit

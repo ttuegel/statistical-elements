@@ -52,11 +52,12 @@ variance lls inp outp =
 --   {(\mathbf{y} - \mathbf{X} \beta)}
 -- \]
 -- given by 'rss'.
-fit :: M Double  -- ^ inputs, n samples (rows) and p variables (columns)
-    -> V Double  -- ^ outputs, n samples
+fit :: M Double  -- ^ n samples (rows), one output and p inputs (columns)
     -> LLS
-fit inp outp =
+fit samples =
   let
+    outp = flatten (samples ?? (All, Take 1))
+    inp = samples ?? (All, Drop 1)
     (stdInp, mean, stdDev) = standardize inp
     -- standardized input values lifted into projective space
     projInp = matrix 1 (replicate (rows stdInp) 1) ||| stdInp

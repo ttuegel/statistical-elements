@@ -31,13 +31,13 @@ data RR =
 -- \]
 -- which effectively reduces model complexity
 -- by shrinking the coefficients \(\beta\).
-fit :: M Double  -- ^ inputs \(\mathbf{X}\),
-                 -- n samples (rows) and p variables (columns)
-    -> V Double  -- ^ outputs \(\mathbf{y}\), n samples
+fit :: M Double  -- ^ n samples (rows), one output and p variables (columns)
     -> Double  -- ^ ridge penalty \(\lambda\)
     -> RR
-fit inp outp penalty =
+fit samples penalty =
   let
+    outp = flatten (samples ?? (All, Take 1))
+    inp = samples ?? (All, Drop 1)
     (stdInp, mean, stdDev) = standardize inp
     meanOutp = Sample.mean outp
     -- centered outputs
