@@ -9,10 +9,6 @@ import qualified Data.Attoparsec.Text as Parse
 import qualified Data.Text.IO as Text
 
 import Linear
-import Statistics.Regression.Linear (LLS)
-import qualified Statistics.Regression.Linear
-import Statistics.Regression.Ridge (RR)
-import qualified Statistics.Regression.Ridge
 
 
 data Train a = Train a | Test a
@@ -90,9 +86,3 @@ parseFile file = do
     partition = partitionEithers . map trainEither
     trainEither (Train x) = Left x
     trainEither (Test x) = Right x
-
-linearRegression :: M Double -> LLS
-linearRegression = Statistics.Regression.Linear.fit
-
-ridgeRegression :: M Double -> Double -> RR
-ridgeRegression = Statistics.Regression.Ridge.fit

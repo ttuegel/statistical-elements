@@ -12,13 +12,14 @@ import Permutation
 -- | Perform cross validation using the given validation sets and loss function.
 cross :: Vector (M Double, M Double)  -- ^ validation sets
       -> (V Double -> V Double -> Double)  -- ^ loss function
+      -> (M Double -> M Double)
       -> (M Double -> a)  -- ^ fit model
       -> (a -> M Double -> V Double)  -- ^ apply model
       -> Double  -- ^ estimated error
-cross validations loss fit apply =
+cross validations loss select fit apply =
   Sample.mean (estimateError <$> validations)
   where
-    estimateError (train, test) =
+    estimateError (select -> train, select -> test) =
       let
         testOut = flatten (test ?? (All, Take 1))
         testInp = test ?? (All, Drop 1)

@@ -1,21 +1,22 @@
-module Statistics.Regression.Linear where
+module Statistics.Regression.LeastSquares where
 
 import qualified Statistics.Sample as Sample
 import qualified Data.Vector.Storable as V
 
+import Combination (Choose)
+import qualified Combination
 import Linear
+import Samples
 
 -- | The result of a linear least-squares regression.
-data LLS =
-  LLS
+data LeastSquares =
+  LeastSquares
   { mean :: V Double
     -- ^ mean of training inputs (from standardization)
   , stdDev :: V Double
     -- ^ standard deviation of training inputs (from standardization)
   , coeffs :: V Double
     -- ^ fit coefficients
-  , scoreZs :: V Double
-    -- ^ Z-score of fit coefficients
   }
   deriving (Show)
 
@@ -25,23 +26,27 @@ scoreZ :: Double  -- ^ variance estimator
        -> Double  -- ^ z-score
 scoreZ var beta v = beta / (var * sqrt v)
 
+loss :: V Double -> V Double -> Double
+loss x y = let r = x - y in r <.> r
+
 -- | Residual sum-of-squares
-rss :: LLS -> M Double -> V Double -> Double
-rss lls inp outp =
+residual :: LeastSquares -> M Double -> Double
+residual lls samples =
   let
+    outp = flatten (samples ?? (All, Take 1))
+    inp = samples ?? (All, Drop 1)
     outp' = fromList (predict lls <$> toRows inp)
-    res = outp - outp'
   in
-    res <.> res
+    loss outp outp'
 
 -- | Variance estimator based on 'rss'.
-variance :: LLS -> M Double -> V Double -> Double
-variance lls inp outp =
+variance :: LeastSquares -> M Double -> Double
+variance fit samples =
   let
-    n = fromIntegral (rows inp)
-    p = fromIntegral (cols inp)
+    n = fromIntegral (rows samples)
+    p = fromIntegral (cols samples - 1)
   in
-    sqrt (rss lls inp outp / (n - p - 1))
+    sqrt (residual fit samples / (n - p - 1))
 
 -- | The linear regression fit of the inputs \(\mathbf{X}\)
 -- to the outputs \(\mathbf{y}\).
@@ -52,9 +57,9 @@ variance lls inp outp =
 --   {(\mathbf{y} - \mathbf{X} \beta)}
 -- \]
 -- given by 'rss'.
-fit :: M Double  -- ^ n samples (rows), one output and p inputs (columns)
-    -> LLS
-fit samples =
+leastSquares :: M Double  -- ^ n samples (rows), one output and p inputs (columns)
+             -> (LeastSquares, V Double)
+leastSquares samples =
   let
     outp = flatten (samples ?? (All, Take 1))
     inp = samples ?? (All, Drop 1)
@@ -64,37 +69,41 @@ fit samples =
     (colSpace, rightTri) = thinQR projInp
     -- least squares fit coefficients
     coeffs = inv rightTri #> (tr colSpace #> outp)
+    self = LeastSquares {..}
     scoreZs =
       let
-        var = variance self inp outp
+        var = variance self samples
         covarDenorm = tr rightTri <> rightTri
       in
         V.zipWith (scoreZ var) coeffs (takeDiag (inv covarDenorm))
-    self = LLS {..}
   in
-    self
+    (self, scoreZs)
 
-predict :: LLS  -- ^ fit coefficients
+predict :: LeastSquares  -- ^ fit coefficients
         -> V Double  -- ^ p-vector of inputs
         -> Double  -- ^ predicted output
-predict (LLS {..}) inp =
+predict (LeastSquares {..}) inp =
   V.head coeffs + V.tail coeffs <.> standardizeWith (mean, stdDev) inp
 
-scoreF :: LLS  -- ^ fit with all variables
-       -> M Double  -- ^ all inputs
-       -> LLS  -- ^ fit with select variables
-       -> M Double  -- ^ selected inputs
-       -> V Double  -- ^ outputs
+predicts :: LeastSquares  -- ^ fit coefficients
+         -> M Double  -- ^ p columns of inputs
+         -> V Double  -- ^ predicted output
+predicts fit inp = V.fromList (predict fit <$> toRows inp)
+
+scoreF :: M Double  -- ^ all inputs
+       -> Choose
+       -> LeastSquares  -- ^ fit with all variables
+       -> LeastSquares  -- ^ fit with select variables
        -> Double
-scoreF lls1 inp1 lls2 inp2 outp =
+scoreF samples selected lls1 lls2 =
   let
-    n = fromIntegral (rows inp1)
-    p1 = fromIntegral (cols inp1)
-    p2 = fromIntegral (cols inp2)
-    rss1 = rss lls1 inp1 outp
-    rss2 = rss lls2 inp2 outp
+    n = fromIntegral (rows samples)
+    p1 = fromIntegral (cols samples - 1)
+    p2 = fromIntegral (Combination.size selected)
+    res1 = residual lls1 samples
+    res2 = residual lls2 (selectInputs samples selected)
   in
-    (rss2 - rss1) * (n - p2 - 1) / (rss2 * (p2 - p1))
+    (res2 - res1) * (n - p2 - 1) / (res2 * (p2 - p1))
 
 standardize :: M Double -> (M Double, V Double, V Double)
 standardize inp =

@@ -4,19 +4,17 @@ import qualified Statistics.Sample as Sample
 import qualified Data.Vector.Storable as V
 
 import Linear
-import Statistics.Regression.Linear (standardize)
+import Statistics.Regression.LeastSquares (standardize)
 
 -- | The result of a ridge regression
-data RR =
-  RR
+data Ridge =
+  Ridge
   { mean :: V Double
     -- ^ mean of training inputs (from standardization)
   , stdDev :: V Double
     -- ^ standard deviation of training inputs (from standardization)
   , coeffs :: V Double
     -- ^ fit coefficients
-  , df :: Double
-    -- ^ effective degrees of freedom
   }
   deriving (Show)
 
@@ -31,10 +29,10 @@ data RR =
 -- \]
 -- which effectively reduces model complexity
 -- by shrinking the coefficients \(\beta\).
-fit :: M Double  -- ^ n samples (rows), one output and p variables (columns)
-    -> Double  -- ^ ridge penalty \(\lambda\)
-    -> RR
-fit samples penalty =
+ridge :: M Double  -- ^ n samples (rows), one output and p variables (columns)
+      -> Double  -- ^ ridge penalty \(\lambda\)
+      -> (Ridge, Double)
+ridge samples penalty =
   let
     outp = flatten (samples ?? (All, Take 1))
     inp = samples ?? (All, Drop 1)
@@ -50,6 +48,6 @@ fit samples penalty =
              (rowSpace #> diag penalized #> tr colSpace #> centerOutp)
     -- effective degrees of freedom
     df = V.sum (singulars * penalized)
-    self = RR {..}
+    self = Ridge {..}
   in
-    self
+    (self, df)

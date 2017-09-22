@@ -1,13 +1,16 @@
 module Statistics.Regression.BestSubset where
 
 import Data.Choose
+import Data.Ord (comparing)
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
-import qualified Data.Vector.Storable as V
+import Refined
 
 import Linear
-import Statistics.Regression.Linear (LLS)
-import qualified Statistics.Regression.Linear as LLS
+import Samples
+import Statistics.Regression.LeastSquares (LeastSquares, leastSquares)
+import qualified Statistics.Regression.LeastSquares as LeastSquares
+import Statistics.Validation.Cross
 
 -- | The linear regression fit of a subset of the inputs \(\mathbf{X}\)
 -- to the outputs \(\mathbf{y}\)
@@ -18,22 +21,30 @@ import qualified Statistics.Regression.Linear as LLS
 --   {(\mathbf{y} - \mathbf{X} \beta)}
 -- \]
 -- given by 'rss'.
-fit :: M Double  -- ^ n samples (rows), one output and p inputs (columns)
-    -> Choose  -- ^ subset
-    -> LLS
-fit samples subset = LLS.fit selected
-  where
-    selected = samples ?? (All, Pos selector)
-    selector = (V.fromList . (0 :)) (fromIntegral <$> elems subset)
+subset :: Choose  -- ^ subset
+       -> M Double  -- ^ n samples (rows), one output and p inputs (columns)
+       -> LeastSquares
+subset selector samples = (fst . leastSquares) (selectInputs samples selector)
 
-subsets :: M Double -> Vector Choose
-subsets samples = do
-  k <- Vector.enumFromN 1 (p - 1)
-  Vector.unfoldr (\a -> (\b -> (,) b b) <$> next a) (choose p k)
-  where
-    p = cols samples - 1
+losses :: M Double -> Refined (GreaterThan 1) Int -> IO (Vector (Choose, Double))
+losses samples n = do
+  permutation <- shuffleSamples samples
+  let validations = validation samples permutation n
+  pure $ do
+    selector <- inputSubsets samples
+    let errEstimate = Statistics.Validation.Cross.cross
+                      validations
+                      LeastSquares.loss
+                      (flip selectInputs selector)
+                      (fst . LeastSquares.leastSquares)
+                      LeastSquares.predicts
+    pure (selector, errEstimate)
 
-fits :: M Double -> Vector (Choose, LLS)
-fits samples = do
-  subset <- subsets samples
-  pure (subset, fit samples subset)
+predicts :: Choose -> LeastSquares -> M Double -> V Double
+predicts selector fit samples =
+  LeastSquares.predicts fit (selectInputs samples selector)
+
+bestSubset :: M Double -> Refined (GreaterThan 1) Int -> IO (Choose, LeastSquares)
+bestSubset samples n = do
+  (selector, _) <- Vector.minimumBy (comparing snd) <$> losses samples n
+  pure (selector, subset selector samples)
