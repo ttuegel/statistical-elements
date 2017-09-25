@@ -26,18 +26,22 @@ scoreZ :: Double  -- ^ variance estimator
        -> Double  -- ^ z-score
 scoreZ var beta v = beta / (var * sqrt v)
 
-loss :: V Double -> V Double -> Double
-loss x y = let r = x - y in r <.> r
+sumOfSquaresLoss :: V Double -> V Double -> Double
+sumOfSquaresLoss x y = let r = x - y in (r <.> r)
 
 -- | Residual sum-of-squares
-residual :: LeastSquares -> M Double -> Double
-residual lls samples =
+residuals :: LeastSquares -> M Double -> Double
+residuals lls samples =
   let
     outp = flatten (samples ?? (All, Take 1))
     inp = samples ?? (All, Drop 1)
     outp' = fromList (predict lls <$> toRows inp)
   in
-    loss outp outp'
+    sumOfSquaresLoss outp outp'
+
+predictionError :: LeastSquares -> M Double -> Double
+predictionError fit samples =
+  residuals fit samples / fromIntegral (rows samples)
 
 -- | Variance estimator based on 'rss'.
 variance :: LeastSquares -> M Double -> Double
@@ -46,7 +50,7 @@ variance fit samples =
     n = fromIntegral (rows samples)
     p = fromIntegral (cols samples - 1)
   in
-    sqrt (residual fit samples / (n - p - 1))
+    sqrt (residuals fit samples / (n - p - 1))
 
 -- | The linear regression fit of the inputs \(\mathbf{X}\)
 -- to the outputs \(\mathbf{y}\).
@@ -100,8 +104,8 @@ scoreF samples selected lls1 lls2 =
     n = fromIntegral (rows samples)
     p1 = fromIntegral (cols samples - 1)
     p2 = fromIntegral (Combination.size selected)
-    res1 = residual lls1 samples
-    res2 = residual lls2 (selectInputs samples selected)
+    res1 = predictionError lls1 samples
+    res2 = predictionError lls2 (selectInputs samples selected)
   in
     (res2 - res1) * (n - p2 - 1) / (res2 * (p2 - p1))
 
