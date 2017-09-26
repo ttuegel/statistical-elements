@@ -37,7 +37,7 @@ losses samples crossSize subsetSize = do
     selector <- inputSubsets samples subsetSize
     let errEstimate = Statistics.Validation.Cross.cross
                       validations
-                      LeastSquares.sumOfSquaresLoss
+                      LeastSquares.squaredLoss
                       (flip selectInputs selector)
                       (fst . LeastSquares.leastSquares)
                       LeastSquares.predicts

@@ -26,31 +26,35 @@ scoreZ :: Double  -- ^ variance estimator
        -> Double  -- ^ z-score
 scoreZ var beta v = beta / (var * sqrt v)
 
-sumOfSquaresLoss :: V Double -> V Double -> Double
-sumOfSquaresLoss x y = let r = x - y in (r <.> r)
+squaredLoss :: V Double -> V Double -> Double
+squaredLoss x y = let r = x - y in (r <.> r)
 
--- | Residual sum-of-squares
-residuals :: LeastSquares -> M Double -> Double
+residuals :: LeastSquares -> M Double -> V Double
 residuals lls samples =
   let
-    outp = flatten (samples ?? (All, Take 1))
-    inp = samples ?? (All, Drop 1)
-    outp' = fromList (predict lls <$> toRows inp)
+    outp_actual = outputs samples
+    inp = inputs samples
+    outp_predicted = fromList (predict lls <$> toRows inp)
   in
-    sumOfSquaresLoss outp outp'
+    outp_predicted - outp_actual
 
-predictionError :: LeastSquares -> M Double -> Double
-predictionError fit samples =
-  residuals fit samples / fromIntegral (rows samples)
+squaredResiduals :: LeastSquares -> M Double -> V Double
+squaredResiduals fit samples =
+  let res = residuals fit samples in res * res
 
--- | Variance estimator based on 'rss'.
-variance :: LeastSquares -> M Double -> Double
-variance fit samples =
+sumOfSquaredResiduals :: LeastSquares -> M Double -> Double
+sumOfSquaredResiduals fit samples = V.sum (squaredResiduals fit samples)
+
+varianceEstimate :: LeastSquares -> M Double -> Double
+varianceEstimate fit samples =
   let
-    n = fromIntegral (rows samples)
-    p = fromIntegral (cols samples - 1)
+    n = rows samples
+    p = cols (inputs samples)
   in
-    sqrt (residuals fit samples / (n - p - 1))
+    sumOfSquaredResiduals fit samples / fromIntegral (n - p - 1)
+
+meanSquaredError :: LeastSquares -> M Double -> Double
+meanSquaredError fit samples = Sample.mean (squaredResiduals fit samples)
 
 -- | The linear regression fit of the inputs \(\mathbf{X}\)
 -- to the outputs \(\mathbf{y}\).
@@ -76,7 +80,7 @@ leastSquares samples =
     self = LeastSquares {..}
     scoreZs =
       let
-        var = variance self samples
+        var = sqrt (varianceEstimate self samples)
         covarDenorm = tr rightTri <> rightTri
       in
         V.zipWith (scoreZ var) coeffs (takeDiag (inv covarDenorm))
@@ -104,10 +108,10 @@ scoreF samples selected lls1 lls2 =
     n = fromIntegral (rows samples)
     p1 = fromIntegral (cols samples - 1)
     p2 = fromIntegral (Combination.size selected)
-    res1 = predictionError lls1 samples
-    res2 = predictionError lls2 (selectInputs samples selected)
+    rss1 = sumOfSquaredResiduals lls1 samples
+    rss2 = sumOfSquaredResiduals lls2 (selectInputs samples selected)
   in
-    (res2 - res1) * (n - p2 - 1) / (res2 * (p2 - p1))
+    (rss2 - rss1) * (n - p2 - 1) / (rss2 * (p2 - p1))
 
 standardize :: M Double -> (M Double, V Double, V Double)
 standardize inp =
