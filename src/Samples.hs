@@ -33,3 +33,9 @@ inputSubsets samples (unrefine -> subsetSize) =
 
 shuffleSamples :: M Double -> IO Permute
 shuffleSamples samples = Permutation.shuffle (rows samples)
+
+inputs :: M Double -> M Double
+inputs samples = samples ?? (All, Drop 1)
+
+outputs :: M Double -> V Double
+outputs samples = flatten (samples ?? (All, Take 1))
