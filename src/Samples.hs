@@ -24,10 +24,10 @@ permuteSamples samples permutation =
     ixs = V.fromList (fromIntegral <$> Permutation.elems permutation)
 
 inputSubsets :: M Double -> Refined (GreaterThan 1) Int -> Vector Choose
-inputSubsets samples (unrefine -> subsetSize) =
+inputSubsets inp (unrefine -> subsetSize) =
   Vector.unfoldr enumSubsets (Combination.choose p subsetSize)
   where
-    p = cols samples - 1
+    p = cols inp
     enumSubsets a = (\b -> (,) b b) <$> Combination.next a
 
 shuffleSamples :: M Double -> IO Permute
