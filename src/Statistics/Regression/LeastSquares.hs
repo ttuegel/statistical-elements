@@ -1,7 +1,7 @@
 module Statistics.Regression.LeastSquares where
 
-import qualified Statistics.Sample as Sample
 import qualified Data.Vector.Storable as V
+import qualified Statistics.Sample as Sample
 
 import Combination (Choose)
 import qualified Combination
@@ -28,6 +28,9 @@ scoreZ var beta v = beta / (var * sqrt v)
 
 squaredLoss :: V Double -> V Double -> Double
 squaredLoss x y = let r = x - y in (r <.> r)
+
+meanSquaredLoss :: V Double -> V Double -> Double
+meanSquaredLoss x y = let r = x - y in Sample.mean (r * r)
 
 residuals :: LeastSquares -> M Double -> V Double
 residuals lls samples =
