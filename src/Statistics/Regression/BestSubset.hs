@@ -9,6 +9,7 @@ import Refined
 import qualified Statistics.Sample as Sample
 
 import Linear
+import Loss
 import Samples
 import Statistics.Regression.LeastSquares (LeastSquares, leastSquares)
 import qualified Statistics.Regression.LeastSquares as LeastSquares
@@ -46,22 +47,20 @@ losses :: M Double  -- ^ samples
        -> Refined (GreaterThan 1) Int  -- ^ subset size
        -> IO (Vector (Choose, (Double, Double)))
 losses samples crossSize subsetSize = do
-  permutation <- shuffleSamples samples
-  let validations = validation samples permutation crossSize
+  perm <- shuffleSamples samples
+  (_, cr) <- validation samples (Just perm) crossSize
   pure $ do
     selector <- inputSubsets (inputs samples) subsetSize
-    let errEstimate = Statistics.Validation.Cross.cross
-                      validations
-                      LeastSquares.meanSquaredLoss
+    let errEstimate = Statistics.Validation.Cross.cross cr
+                      (squared (-))
                       (subset selector)
                       predicts
     pure (selector, errEstimate)
 
 validateSubset :: M Double -> Refined (GreaterThan 1) Int -> Choose -> IO (Double, Double)
 validateSubset samples crossSize selector = do
-  permutation <- shuffleSamples samples
-  let validations = validation samples permutation crossSize
-  pure $ Statistics.Validation.Cross.cross validations LeastSquares.meanSquaredLoss (subset selector) predicts
+  (_, cr) <- validation samples Nothing crossSize
+  pure $ Statistics.Validation.Cross.cross cr (squared (-)) (subset selector) predicts
 
 predicts :: Subset -> M Double -> V Double
 predicts (Subset {..}) inp =

@@ -1,42 +1,62 @@
 module Statistics.Validation.Cross where
 
+import Control.Lens.Fold
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
+import Data.Vector.Generic.Lens
 import qualified Data.Vector.Storable as V
 import Refined
-import qualified Statistics.Sample as Sample
 
 import Linear
 import Permutation
 import Samples
+import Sum
+
+data Cross =
+  Cross
+  { validations :: Vector (M Double, M Double)
+    -- ^ validation sets of (training, test) data
+  }
+  deriving Show
 
 -- | Perform cross validation using the given validation sets and loss function.
-cross :: Vector (M Double, M Double)  -- ^ validation sets
-      -> (V Double -> V Double -> Double)  -- ^ loss function
-      -> (M Double -> a)  -- ^ fit model
-      -> (a -> M Double -> V Double)  -- ^ apply model
+cross :: Cross
+      -> (Double -> Double -> Double)  -- ^ loss function
+      -> (M Double -> a)  -- ^ train model
+      -> (a -> M Double -> V Double)  -- ^ make predictions
       -> (Double, Double)  -- ^ estimated error, standard error
-cross validations loss fit predict =
-  (Sample.mean estimates, stdErr estimates)
+
+cross (Cross {..}) loss train predict =
+  (meanOf traverseVs estimates, stdErrOf traverseVs estimates)
+
   where
-    stdErr xs = Sample.stdDev xs / sqrt n where n = fromIntegral (Vector.length xs)
-    estimates = estimateError <$> validations
-    estimateError (train, test) =
+    traverseVs :: Fold (Vector (V Double)) Double
+    traverseVs = traverse . vectorTraverse
+    estimates = estimatedLosses <$> validations
+    estimatedLosses (training, testing) =
       let
-        testOut = outputs test
-        testInp = inputs test
-        fitOut = predict (fit train) testInp
+        testOut = outputs testing
+        testInp = inputs testing
+        fitOut = predict (train training) testInp
       in
-        loss testOut fitOut
+        V.zipWith loss testOut fitOut
 
 -- | Select @n@ cross-validation sets from the given samples.
+-- If a permutation is not supplied, one will be randomly generated.
 validation :: M Double  -- ^ samples
-           -> Permute
-           -> Refined (GreaterThan 1) Int  -- ^ @n@, number of cross-validation sets
-           -> Vector (M Double, M Double)  -- ^ (training, testing) sets
-validation samples perm (unrefine -> n) =
-  Vector.generate n sets
-  where
+           -> Maybe Permute
+           -- ^ permutation applied to input samples
+           -> Refined (GreaterThan 1) Int
+           -- ^ @n@, number of cross-validation sets
+           -> IO (Permute, Cross)
+
+validation samples may_perm (unrefine -> n) = do
+
+  perm <- maybe (shuffleSamples samples) pure may_perm
+
+  let
+    validations = Vector.generate n sets
+
     sets i =
       let
         (before, rest) = Vector.splitAt i blocks
@@ -45,9 +65,12 @@ validation samples perm (unrefine -> n) =
         train = Vector.foldl1' (===) (before Vector.++ after)
       in
         (train, test)
+
+    shuffled = permuteSamples samples perm
+
     blocks = Vector.generate n block
       where
-        (q, r) = quotRem (rows samples) n
+        (q, r) = quotRem (rows shuffled) n
         block i =
           let
             len
@@ -58,6 +81,8 @@ validation samples perm (unrefine -> n) =
               | otherwise = r + q * i
             rowMap = asColumn (V.generate len (lookupRow start))
           in
-            remap rowMap columnMap samples
+            remap rowMap columnMap shuffled
         columnMap = asRow (V.enumFromN 0 (cols samples))
-        lookupRow start i = fromIntegral (unsafeAt perm (start + i))
+        lookupRow start i = fromIntegral (start + i)
+
+  pure (perm, Cross {..})
