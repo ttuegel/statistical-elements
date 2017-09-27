@@ -28,6 +28,7 @@ library
     , text
     , vector
   exposed-modules:
+      Chapter3
       Combination
       Data.Prostate
       Exception
