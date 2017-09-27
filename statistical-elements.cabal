@@ -17,6 +17,8 @@ library
     , base
     , hmatrix
     , inline-r
+    , lens
+    , math-functions
     , MonadRandom
     , open-browser
     , permutation
