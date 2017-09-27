@@ -32,6 +32,7 @@ library
       Data.Prostate
       Exception
       Linear
+      Loss
       Permutation
       Plot
       Plot.Labels
