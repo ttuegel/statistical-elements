@@ -8,21 +8,24 @@ import qualified Statistics.Sample as Sample
 
 import Linear
 import Permutation
+import Samples
 
 -- | Perform cross validation using the given validation sets and loss function.
 cross :: Vector (M Double, M Double)  -- ^ validation sets
       -> (V Double -> V Double -> Double)  -- ^ loss function
       -> (M Double -> a)  -- ^ fit model
       -> (a -> M Double -> V Double)  -- ^ apply model
-      -> Double  -- ^ estimated error
-  Sample.mean (estimateError <$> validations)
+      -> (Double, Double)  -- ^ estimated error, standard error
 cross validations loss fit predict =
+  (Sample.mean estimates, stdErr estimates)
   where
+    stdErr xs = Sample.stdDev xs / sqrt n where n = fromIntegral (Vector.length xs)
+    estimates = estimateError <$> validations
     estimateError (train, test) =
       let
-        testOut = flatten (test ?? (All, Take 1))
-        testInp = test ?? (All, Drop 1)
-        fitOut = apply (fit train) testInp
+        testOut = outputs test
+        testInp = inputs test
+        fitOut = predict (fit train) testInp
       in
         loss testOut fitOut
 

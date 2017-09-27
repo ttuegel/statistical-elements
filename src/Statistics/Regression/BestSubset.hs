@@ -4,7 +4,9 @@ import Data.Choose
 import Data.Ord (comparing)
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
+import qualified Data.Vector.Storable as V
 import Refined
+import qualified Statistics.Sample as Sample
 
 import Linear
 import Samples
@@ -42,18 +44,24 @@ subset selector samples =
 losses :: M Double  -- ^ samples
        -> Refined (GreaterThan 1) Int  -- ^ number of cross-validation sets
        -> Refined (GreaterThan 1) Int  -- ^ subset size
-       -> IO (Vector (Choose, Double))
+       -> IO (Vector (Choose, (Double, Double)))
 losses samples crossSize subsetSize = do
   permutation <- shuffleSamples samples
   let validations = validation samples permutation crossSize
   pure $ do
-    selector <- inputSubsets samples subsetSize
+    selector <- inputSubsets (inputs samples) subsetSize
     let errEstimate = Statistics.Validation.Cross.cross
                       validations
-                      LeastSquares.squaredLoss
-                      (fst . LeastSquares.leastSquares)
-                      LeastSquares.predicts
+                      LeastSquares.meanSquaredLoss
+                      (subset selector)
+                      predicts
     pure (selector, errEstimate)
+
+validateSubset :: M Double -> Refined (GreaterThan 1) Int -> Choose -> IO (Double, Double)
+validateSubset samples crossSize selector = do
+  permutation <- shuffleSamples samples
+  let validations = validation samples permutation crossSize
+  pure $ Statistics.Validation.Cross.cross validations LeastSquares.meanSquaredLoss (subset selector) predicts
 
 predicts :: Subset -> M Double -> V Double
 predicts (Subset {..}) inp =
@@ -62,11 +70,12 @@ predicts (Subset {..}) inp =
 bestSubset :: M Double  -- ^ samples
            -> Refined (GreaterThan 1) Int  -- ^ number of cross-validation sets
            -> Refined (GreaterThan 1) Int  -- ^ subset size
-           -> IO (Choose, LeastSquares)
+           -> IO (Subset, Double, Double)
 bestSubset samples crossSize subsetSize = do
-  (selector, _) <- Vector.minimumBy (comparing snd)
-                   <$> losses samples crossSize subsetSize
-  pure (selector, subset selector samples)
+  (selector, (err, var)) <- Vector.minimumBy (comparing (fst . snd))
+                            <$> losses samples crossSize subsetSize
+  pure (subset selector samples, err, var)
+
 residuals :: Subset -> M Double -> V Double
 residuals (Subset {..}) samples =
   let
