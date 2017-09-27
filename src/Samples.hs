@@ -15,8 +15,7 @@ selectInputs :: M Double -> Choose -> M Double
 selectInputs samples selection =
   samples ?? (All, Pos ixs)
   where
-    selected = (+1) . fromIntegral <$> Combination.elems selection
-    ixs = V.fromList (0 : selected)
+    ixs = V.fromList (fromIntegral <$> Combination.elems selection)
 
 permuteSamples :: M Double -> Permute -> M Double
 permuteSamples samples permutation =
