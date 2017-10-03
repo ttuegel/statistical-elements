@@ -20,19 +20,20 @@ data Cross =
   deriving Show
 
 -- | Perform cross validation using the given validation sets and loss function.
-cross :: Cross
-      -> (Double -> Double -> Double)  -- ^ loss function
-      -> (M Double -> a)  -- ^ train model
-      -> (a -> M Double -> V Double)  -- ^ make predictions
-      -> (Double, Double)  -- ^ estimated error, standard error
+crossValidate
+  :: Vector (M Double, M Double)
+  -> (Double -> Double -> Double)  -- ^ loss function
+  -> (M Double -> a)  -- ^ train model
+  -> (a -> M Double -> V Double)  -- ^ make predictions
+  -> (Double, Double)  -- ^ standard error, cross validation error
 
-cross (Cross {..}) loss train predict =
-  (meanOf traverseVs estimates, stdErrOf traverseVs estimates)
-
+crossValidate sets loss train predict =
+  (stdErrOf traverseVs estimates, meanOf traverseVs estimates)
   where
     traverseVs :: Fold (Vector (V Double)) Double
     traverseVs = traverse . vectorTraverse
-    estimates = estimatedLosses <$> validations
+
+    estimates = estimatedLosses <$> sets
     estimatedLosses (training, testing) =
       let
         testOut = outputs testing
@@ -43,20 +44,15 @@ cross (Cross {..}) loss train predict =
 
 -- | Select @n@ cross-validation sets from the given samples.
 -- If a permutation is not supplied, one will be randomly generated.
-validation :: M Double  -- ^ samples
-           -> Maybe Permute
-           -- ^ permutation applied to input samples
-           -> Refined (GreaterThan 1) Int
-           -- ^ @n@, number of cross-validation sets
-           -> IO (Permute, Cross)
+validationSets
+  :: M Double  -- ^ samples
+  -> Permute  -- ^ permutation applied to input samples
+  -> Refined (GreaterThan 1) Int -- ^ @n@, number of cross-validation sets
+  -> Vector (M Double, M Double)
 
-validation samples may_perm (unrefine -> n) = do
-
-  perm <- maybe (shuffleSamples samples) pure may_perm
-
-  let
-    validations = Vector.generate n sets
-
+validationSets samples perm (unrefine -> n) =
+  Vector.generate n sets
+  where
     sets i =
       let
         (before, rest) = Vector.splitAt i blocks
@@ -84,5 +80,3 @@ validation samples may_perm (unrefine -> n) = do
             remap rowMap columnMap shuffled
         columnMap = asRow (V.enumFromN 0 (cols samples))
         lookupRow start i = fromIntegral (start + i)
-
-  pure (perm, Cross {..})

@@ -10,6 +10,7 @@ import qualified Statistics.Sample as Sample
 
 import Linear
 import Loss
+import Permutation
 import Samples
 import Statistics.Regression.LeastSquares (LeastSquares, leastSquares)
 import qualified Statistics.Regression.LeastSquares as LeastSquares
@@ -42,38 +43,40 @@ subset selector samples =
   in
     Subset {..}
 
-losses :: M Double  -- ^ samples
-       -> Refined (GreaterThan 1) Int  -- ^ number of cross-validation sets
-       -> Refined (GreaterThan 1) Int  -- ^ subset size
-       -> IO (Vector (Choose, (Double, Double)))
-losses samples crossSize subsetSize = do
-  perm <- shuffleSamples samples
-  (_, cr) <- validation samples (Just perm) crossSize
-  pure $ do
-    selector <- inputSubsets (inputs samples) subsetSize
-    let errEstimate = Statistics.Validation.Cross.cross cr
-                      (squared (-))
-                      (subset selector)
-                      predicts
-    pure (selector, errEstimate)
+validateSubsets
+  :: M Double  -- ^ samples
+  -> Permute
+  -> Refined (GreaterThan 1) Int  -- ^ number of cross validation sets
+  -> Refined (GreaterThan 1) Int  -- ^ subset size
+  -> Vector ((Double, Double), Choose)
+  -- ^ (selected inputs, (cross validation error, standard error))
+validateSubsets samples perm crossSize subsetSize = do
+  let sets = validationSets samples perm crossSize
+  selector <- inputSubsets (inputs samples) subsetSize
+  pure (validateSubset sets selector, selector)
 
-validateSubset :: M Double -> Refined (GreaterThan 1) Int -> Choose -> IO (Double, Double)
-validateSubset samples crossSize selector = do
-  (_, cr) <- validation samples Nothing crossSize
-  pure $ Statistics.Validation.Cross.cross cr (squared (-)) (subset selector) predicts
+validateSubset
+  :: Vector (M Double, M Double)  -- ^ cross validation sets
+  -> Choose                       -- ^ selected subset of inputs
+  -> (Double, Double)             -- ^ (standard error, cross validation error)
+validateSubset sets selector =
+  crossValidate sets (squared (-)) (subset selector) predicts
 
 predicts :: Subset -> M Double -> V Double
 predicts (Subset {..}) inp =
   LeastSquares.predicts fit (selectInputs inp selector)
 
-bestSubset :: M Double  -- ^ samples
-           -> Refined (GreaterThan 1) Int  -- ^ number of cross-validation sets
-           -> Refined (GreaterThan 1) Int  -- ^ subset size
-           -> IO (Subset, Double, Double)
-bestSubset samples crossSize subsetSize = do
-  (selector, (err, var)) <- Vector.minimumBy (comparing (fst . snd))
-                            <$> losses samples crossSize subsetSize
-  pure (subset selector samples, err, var)
+bestSubset
+  :: M Double  -- ^ samples
+  -> Permute
+  -> Refined (GreaterThan 1) Int  -- ^ number of cross-validation sets
+  -> Refined (GreaterThan 1) Int  -- ^ subset size
+  -> ((Double, Double), Subset)
+bestSubset samples perm crossSize subsetSize =
+  (err, subset selector samples)
+  where
+    (err, selector) = Vector.minimumBy (comparing (snd . fst))
+                      (validateSubsets samples perm crossSize subsetSize)
 
 residuals :: Subset -> M Double -> V Double
 residuals (Subset {..}) samples =
