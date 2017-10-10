@@ -10,17 +10,17 @@ cabal-version:  >= 1.10
 library
   hs-source-dirs:
       src/
-  default-extensions: DataKinds DeriveFoldable DeriveFunctor DeriveTraversable FlexibleContexts FlexibleInstances GADTs KindSignatures MultiParamTypeClasses OverloadedStrings RankNTypes RecordWildCards ScopedTypeVariables TypeOperators ViewPatterns
+  default-extensions: DataKinds DeriveFoldable DeriveFunctor DeriveTraversable FlexibleContexts FlexibleInstances GADTs KindSignatures MultiParamTypeClasses OverloadedStrings QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables TypeOperators ViewPatterns
   ghc-options: -Wall
   build-depends:
-      attoparsec
+      Chart
+    , Chart-gtk
+    , MonadRandom
+    , attoparsec
     , base
     , hmatrix
-    , inline-r
     , lens
     , math-functions
-    , MonadRandom
-    , open-browser
     , permutation
     , random
     , refined
@@ -35,8 +35,6 @@ library
       Linear
       Loss
       Permutation
-      Plot
-      Plot.Labels
       Rejection
       Samples
       Statistics.Gaussian

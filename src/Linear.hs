@@ -3,7 +3,7 @@ module Linear
     , V, M, H
     ) where
 
-import Numeric.LinearAlgebra hiding (Herm, Matrix, Vector)
+import Numeric.LinearAlgebra hiding (Herm, Matrix, R, Vector)
 import qualified Numeric.LinearAlgebra
 
 type V = Numeric.LinearAlgebra.Vector

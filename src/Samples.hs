@@ -23,12 +23,13 @@ permuteSamples samples permutation =
   where
     ixs = V.fromList (fromIntegral <$> Permutation.elems permutation)
 
-inputSubsets :: M Double -> Refined (GreaterThan 1) Int -> Vector Choose
+inputSubsets :: M Double -> Refined (GreaterThan 0) Int -> Vector Choose
 inputSubsets inp (unrefine -> subsetSize) =
-  Vector.unfoldr enumSubsets (Combination.choose p subsetSize)
+  Vector.unfoldr enumSubsets (Just $ Combination.choose p subsetSize)
   where
     p = cols inp
-    enumSubsets a = (\b -> (,) b b) <$> Combination.next a
+    enumSubsets (Just a) = Just (a, Combination.next a)
+    enumSubsets Nothing = Nothing
 
 shuffleSamples :: M Double -> IO Permute
 shuffleSamples samples = Permutation.shuffle (rows samples)

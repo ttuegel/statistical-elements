@@ -47,7 +47,7 @@ validateSubsets
   :: M Double  -- ^ samples
   -> Permute
   -> Refined (GreaterThan 1) Int  -- ^ number of cross validation sets
-  -> Refined (GreaterThan 1) Int  -- ^ subset size
+  -> Refined (GreaterThan 0) Int  -- ^ subset size
   -> Vector ((Double, Double), Choose)
   -- ^ (selected inputs, (cross validation error, standard error))
 validateSubsets samples perm crossSize subsetSize = do
@@ -70,7 +70,7 @@ bestSubset
   :: M Double  -- ^ samples
   -> Permute
   -> Refined (GreaterThan 1) Int  -- ^ number of cross-validation sets
-  -> Refined (GreaterThan 1) Int  -- ^ subset size
+  -> Refined (GreaterThan 0) Int  -- ^ subset size
   -> ((Double, Double), Subset)
 bestSubset samples perm crossSize subsetSize =
   (err, subset selector samples)

@@ -1,14 +1,14 @@
 name: statistical-elements
 
 dependencies:
+  - Chart
+  - Chart-gtk
+  - MonadRandom
   - attoparsec
   - base
   - hmatrix
-  - inline-r
   - lens
   - math-functions
-  - MonadRandom
-  - open-browser
   - permutation
   - random
   - refined
@@ -27,6 +27,7 @@ default-extensions:
   - KindSignatures
   - MultiParamTypeClasses
   - OverloadedStrings
+  - QuasiQuotes
   - RankNTypes
   - RecordWildCards
   - ScopedTypeVariables
