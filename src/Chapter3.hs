@@ -1,11 +1,11 @@
 module Chapter3 where
 
-import Debug.Trace
-
+import Control.Lens
 import qualified Data.Vector as Vector
 import Data.Vector.Generic.Lens
 import qualified Data.Vector.Storable as V
-import Graphics.Rendering.Chart.Easy
+import Graphics.Rendering.Chart
+import Graphics.Rendering.Chart.State
 import Graphics.Rendering.Chart.Gtk (renderableToWindow)
 import Refined
 
@@ -43,9 +43,9 @@ leastSquares = do
   perm <- shuffleSamples training
   let
     Right crossSize = refine 10
-    sets = validationSets training perm crossSize
+    cvSets = validationSets training perm crossSize
     (cvStdErr, cvErr) =
-      crossValidate sets (squared (-))
+      crossValidate cvSets (squared (-))
       (fst . LeastSquares.leastSquares) LeastSquares.predicts
   pure Result {..}
 
@@ -68,16 +68,23 @@ bestSubset = do
 
 plotSubsetsCrossValidation :: IO ()
 plotSubsetsCrossValidation = do
-  (training, testing) <- parseFile "./data/prostate/prostate.data"
+  (training, _) <- parseFile "./data/prostate/prostate.data"
   perm <- shuffleSamples training
   let
     Right crossSize = refine 10
-    validations = do
-      Right subsetSize <- refine . (\x -> traceShow x x) <$> Vector.enumFromN 1 (cols (inputs training))
-      ((cvErr, cvStdErr), _) <- validateSubsets training perm crossSize subsetSize
+    pointsWithErr = do
+      Right subsetSize <- refine <$> Vector.enumFromN 1 (cols (inputs training))
+      ((cvStdErr, cvErr), _) <- validateSubsets training perm crossSize subsetSize
       let n :: Double = fromIntegral (unrefine subsetSize)
-      pure (n, cvErr, cvErr - cvStdErr, cvErr + cvStdErr)
-    (Vector.toList -> x, Vector.toList -> y, _, _) = Vector.unzip4 validations
+      pure (symErrPoint n cvErr 0 cvStdErr)
+    points = do
+      pt <- pointsWithErr
+      pure ((ev_best . ep_x) pt, (ev_best . ep_y) pt)
     p = toRenderable $ do
-      plot (points "" (zip x y))
+      plot $ liftEC $ do
+        c <- takeColor
+        plot_points_values .= Vector.toList points
+        plot_points_style . point_color .= c
+        plot_points_style . point_radius .= 2
+      plot $ liftEC $ plot_errbars_values .= Vector.toList pointsWithErr
   renderableToWindow p 800 600
