@@ -16,6 +16,7 @@ import Samples
 import Statistics.Regression.BestSubset as BestSubset
 import Statistics.Regression.LeastSquares (LeastSquares)
 import qualified Statistics.Regression.LeastSquares as LeastSquares
+import Statistics.Regression.Ridge (validateRidge)
 import Statistics.Validation.Cross
 import Sum
 
@@ -86,5 +87,20 @@ plotSubsetsCrossValidation = do
         plot_points_values .= Vector.toList points
         plot_points_style . point_color .= c
         plot_points_style . point_radius .= 2
+      plot $ liftEC $ plot_errbars_values .= Vector.toList pointsWithErr
+  renderableToWindow p 800 600
+
+plotRidgeCrossValidation :: IO ()
+plotRidgeCrossValidation = do
+  (training, _) <- parseFile "./data/prostate/prostate.data"
+  perm <- shuffleSamples training
+  let
+    Right crossSize = refine 10
+    crossSets = validationSets training perm crossSize
+    pointsWithErr = do
+      penalty <- Vector.enumFromStepN 0 0.1 100
+      let (cvStdErr, cvErr) = validateRidge crossSets penalty
+      pure (symErrPoint penalty cvErr 0 cvStdErr)
+    p = toRenderable $ do
       plot $ liftEC $ plot_errbars_values .= Vector.toList pointsWithErr
   renderableToWindow p 800 600
