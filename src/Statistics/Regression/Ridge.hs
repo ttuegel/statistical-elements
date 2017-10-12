@@ -1,10 +1,13 @@
 module Statistics.Regression.Ridge where
 
-import qualified Statistics.Sample as Sample
+import Data.Vector (Vector)
 import qualified Data.Vector.Storable as V
+import qualified Statistics.Sample as Sample
 
 import Linear
-import Statistics.Regression.LeastSquares (standardize)
+import Loss
+import Statistics.Regression.LeastSquares (standardize, standardizeWith)
+import Statistics.Validation.Cross
 
 -- | The result of a ridge regression
 data Ridge =
@@ -29,10 +32,10 @@ data Ridge =
 -- \]
 -- which effectively reduces model complexity
 -- by shrinking the coefficients \(\beta\).
-ridge :: M Double  -- ^ n samples (rows), one output and p variables (columns)
-      -> Double  -- ^ ridge penalty \(\lambda\)
-      -> (Ridge, Double)
-ridge samples penalty =
+ridge :: Double  -- ^ ridge penalty \(\lambda\)
+      -> M Double  -- ^ n samples (rows), one output and p variables (columns)
+      -> Ridge
+ridge penalty samples =
   let
     outp = flatten (samples ?? (All, Take 1))
     inp = samples ?? (All, Drop 1)
@@ -46,8 +49,23 @@ ridge samples penalty =
     -- least squares fit coefficients
     coeffs = V.cons meanOutp
              (rowSpace #> diag penalized #> tr colSpace #> centerOutp)
-    -- effective degrees of freedom
-    df = V.sum (singulars * penalized)
-    self = Ridge {..}
   in
-    (self, df)
+    Ridge {..}
+
+validateRidge
+  :: Vector (M Double, M Double)  -- ^ cross validation sets
+  -> Double                       -- ^ penalty
+  -> (Double, Double)             -- ^ (standard error, cross validation error)
+validateRidge sets penalty =
+  crossValidate sets (squared (-)) (ridge penalty) predicts
+
+predict :: Ridge  -- ^ fit coefficients
+        -> V Double  -- ^ p-vector of inputs
+        -> Double  -- ^ predicted output
+predict (Ridge {..}) inp =
+  V.head coeffs + V.tail coeffs <.> standardizeWith (mean, stdDev) inp
+
+predicts :: Ridge  -- ^ fit coefficients
+         -> M Double  -- ^ p columns of inputs
+         -> V Double  -- ^ predicted output
+predicts fit inp = V.fromList (predict fit <$> toRows inp)
